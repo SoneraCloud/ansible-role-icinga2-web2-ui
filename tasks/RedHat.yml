@@ -15,6 +15,21 @@
   notify:
    - restart icinga2
 
+- name: Configure PHP timezone
+  ini_file:
+    dest: /etc/php.ini
+    section: Date
+    option: date.timezone
+    value: "{{ timezone }}"
+    mode: 0644
+  notify: restart apache
+
+- name: Start and enable apache
+  service:
+    name: httpd
+    enabled: yes
+    state: started
+
 # IDO database setup
 
 - name: Create a IDO Database for Icinga2
@@ -77,25 +92,20 @@
   command: /sbin/icinga2 api setup
   args:
     creates:
-      - /var/lib/icinga2/ca/ca.crt
-      - /var/lib/icinga2/ca/ca.key
       - /etc/icinga2/pki/{{ ansible_fqdn }}.key
       - /etc/icinga2/pki/{{ ansible_fqdn }}.crt
-      - /etc/icinga2/conf.d/api-users.conf
-      - /etc/icinga2/features-enabled/api.conf
   notify:
     - restart icinga2
 
-- name: Fix cert getting deployed to var when the default location is in /etc
-  file:
-    src: /var/lib/icinga2/ca/{{ item }}
-    dest: /etc/icinga2/pki/{{ item }}
-    state: link
-  with_items:
-    - ca.crt
-    - ca.key
-  notify:
-    - restart icinga2
+    #- name: Fix cert getting deployed to var when the default location is in /etc
+    #  file:
+    #    src: /var/lib/icinga2/ca/{{ item }}
+    #    dest: /etc/icinga2/pki/{{ item }}
+    #    state: link
+    #  with_items:
+    #    - ca.key
+    #  notify:
+    #    - restart icinga2
 
 - name: Deploy icinga2 config files
   template:
@@ -176,15 +186,6 @@
     priv: "{{ icinga2_director_db }}.*:ALL,GRANT"
   notify: restart icinga2
 
-- name: Configure PHP timezone
-  ini_file:
-    dest: /etc/php.ini
-    section: Date
-    option: date.timezone
-    value: "{{ timezone }}"
-    mode: 0644
-  notify: restart apache
-
 - name: Create config directories
   file:
     path: "{{ item }}"
@@ -260,6 +261,7 @@
     src: "/usr/share/icingaweb2/modules/{{ item }}"
     state: link
     owner: apache
+    group: icingaweb2
   with_items:
     - doc
     - monitoring
@@ -268,14 +270,25 @@
     - restart icinga2
     - fix icinga2 permissions
 
-- name: Deploy icingaweb2 director schema
-  command: /bin/icingacli director migration run
-
-- name: Deploy icingaweb2 director configuration
-  command: /bin/icingacli director kickstart run
-
-- name: Fix SELinux type and unix permissions for /etc/icingaweb2
+- name: Fix SELinux permissions for /etc/icingaweb2
   file:
     path: /etc/icingaweb2
     setype: httpd_sys_rw_content_t
     recurse: yes
+
+- name: Allow apache to connect to the network (Director exec's curl from PHP for reasons unknown!)
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
+
+- name: Deploy icingaweb2 director schema
+  command: /bin/icingacli director migration run
+
+- name: Flush handlers (restart icinga2 if needed)
+  meta: flush_handlers
+
+- name: Deploy icingaweb2 director configuration
+  command: /bin/icingacli director kickstart run
+  notify:
+    - restart icinga2
