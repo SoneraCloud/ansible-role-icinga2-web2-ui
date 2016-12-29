@@ -1,7 +1,11 @@
 Role Name
 =========
 
-Ansible role to install Icinga2 Web2 Ui
+Ansible role to install Icinga2 Web2 Ui based on the original: https://github.com/Icinga/icinga2-ansible
+
+This fork extends the CentOS/RHEL functionality to include:
+ - Fully automated install of web2 with no setup wizzard steps (thanks to https://github.com/bennythejudge/icinga2-ansible/tree/master/icinga2-ansible-web2-ui for the inspiration)
+ - Fully automated install of director (thanks to https://github.com/mamercad/ansible-icinga2-server for the inspiration)
 
 Requirements
 ------------
@@ -17,7 +21,8 @@ PHP (is going to be installed as a dependency of icingaweb2)
 Dependencies
 ------------
 
-Roles: **icinga2-ansible-no-ui**
+Roles:
+ - https://github.com/SoneraCloud/ansible-role-icinga2-no-ui
 
 Example Playbook
 ----------------
@@ -71,3 +76,4 @@ Author Information
 ------------------
 
 Valentino Gagliardi - Icinga Dev Team
+Peter Jenkins
