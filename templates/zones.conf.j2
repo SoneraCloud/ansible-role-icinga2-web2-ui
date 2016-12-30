@@ -4,5 +4,9 @@ object Endpoint NodeName {
 
 object Zone ZoneName {
   endpoints = [ NodeName ]
-  global = true /* Allows management across all hosts in this zone */
+}
+
+# The icinga2 web2 director module uses this to manage the whole configuration
+object Zone "director-global" {
+      global = true
 }
