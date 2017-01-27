@@ -53,12 +53,13 @@
   notify: restart icinga2
 
 - name: Configure Icinga2 Ido Mysql Feature
-  template: src=ido-mysql.conf.j2
-            dest={{ icinga2_ido_mysql_conf }}
-            backup=yes
-            owner=icinga
-            group=icinga
-            mode=0640
+  template:
+    src: ido-mysql.conf.j2
+    dest: "{{ icinga2_ido_mysql_conf }}"
+    backup: yes
+    owner: icinga
+    group: icinga
+    mode: 0640
   notify: restart icinga2
 
 # Configure existing icinga2 installation to be a server
